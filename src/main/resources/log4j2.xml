@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration status="error">
+	<Properties>
+		<Property name="LOG_DIR">C:/tomcat/logs/mvc</Property>
+		<Property name="pattern">%d %p %c{1.} [%t] %m%n</Property>
+	</Properties>
+	<!-- 先定義所有的appender -->
+	<appenders>
+		<!-- 這個輸出控制台的配置 -->
+		<Console name="Console" target="SYSTEM_OUT">
+			<PatternLayout pattern="${pattern}" />
+		</Console>
+
+		<!-- 文件會打印出所有信息，這個log每次運行程序會自動清空，由append屬性決定，這個也挺有用的，適合臨時測試用 -->
+		<!-- append為TRUE表示消息增加到指定文件中，false表示消息覆蓋指定的文件內容，默認值是true -->
+		<File name="log" fileName="${LOG_DIR}/test.log" append="false">
+			<PatternLayout pattern="${pattern}" />
+		</File>
+
+		<!-- 添加過濾器ThresholdFilter,可以有選擇的輸出某個級別以上的類別 onMatch="ACCEPT" onMismatch="DENY"意思是匹配就接受,否則直接拒絕 -->
+		<RollingFile
+			name="ERROR"
+			fileName="${LOG_DIR}/error/error.log"
+			ignoreExceptions="false"
+			filePattern="${LOG_DIR}/error/error-%d{yyyy-MM-dd}-%i.log.gz">
+			<ThresholdFilter level="error" onMatch="ACCEPT" onMismatch="DENY" />
+			<PatternLayout pattern="${pattern}" />
+			<SizeBasedTriggeringPolicy size="2MB" />
+		</RollingFile>
+		
+		<RollingFile
+			name="AccessLog"
+			fileName="${LOG_DIR}/access/web.log"
+			filePattern="${LOG_DIR}/access/web-%d{yyyy-MM-dd}-%i.log.gz"
+			ignoreExceptions="false">
+			<ThresholdFilter level="info" onMatch="ACCEPT" onMismatch="DENY" />
+			<PatternLayout pattern="%d{yyyy/MM/dd HH:mm:ss}|%m%n" />
+			<TimeBasedTriggeringPolicy interval="1"/>
+		</RollingFile>
+		
+		<!-- 這個會打印出所有的信息，每次大小超過size，則這size大小的日誌會自動存入按年份-月份建立的文件夾下面並進行壓縮，作為存檔 -->
+		<RollingFile name="RollingFile"
+			fileName="${LOG_DIR}/all.log"
+			filePattern="${LOG_DIR}/$${date:yyyy-MM}/all-%d{MM-dd-yyyy}-%i.log.gz"
+			ignoreExceptions="false">
+			<ThresholdFilter level="info" onMatch="ACCEPT" onMismatch="DENY" />
+			<PatternLayout pattern="${pattern}" />
+			<SizeBasedTriggeringPolicy size="2MB" />
+		</RollingFile>
+	</appenders>
+
+	<!-- 然後定義logger，只有定義了logger並引入的appender，appender才會生效 -->
+	<loggers>
+		<!-- Access log -->
+		<logger name="com.asuscloud.demo.aspect.AccessLog" level="INFO">
+			<appender-ref ref="AccessLog" />
+		</logger>
+		<!-- 建立一個默認的root的logger -->
+		<root level="trace">
+			<appender-ref ref="RollingFile" />
+			<appender-ref ref="Console" />
+			<appender-ref ref="ERROR" />
+			<appender-ref ref="log" />
+		</root>
+	</loggers>
+</configuration>  
